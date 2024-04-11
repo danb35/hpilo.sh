@@ -12,12 +12,6 @@ print_err () {
   echo
 }
 
-# Check for root privileges
-if ! [ $(id -u) = 0 ]; then
-   print_err "This script must be run with root privileges"
-   exit 1
-fi
-
 #####################################################################
 print_msg "General configuration..."
 
@@ -29,6 +23,8 @@ PASSWORD=""
 STAGING=0
 DNSAPI="dns_cf"
 CONFIG_NAME="hpilo.cfg"
+ACMESH_DIR="/root/.acme.sh"
+SCRIPT_BASEDIR="$(pwd)"
 
 SCRIPT=$(readlink -f "$0")
 SCRIPTPATH=$(dirname "${SCRIPT}")
@@ -39,8 +35,8 @@ if ! [ -e "${SCRIPTPATH}"/"${CONFIG_NAME}" ]; then
   exit 1
 fi
 
-# Make the file root readable only as it contains passwords
-chmod 700 "${SCRIPTPATH}"/"${CONFIG_NAME}"
+# Make the file user-readable only as it contains passwords
+chmod 600 "${SCRIPTPATH}"/"${CONFIG_NAME}"
 
 . "${SCRIPTPATH}"/"${CONFIG_NAME}"
 
@@ -71,7 +67,7 @@ print_msg "DNS resolver check..."
 FQDN="${HOSTNAME}.${DOMAIN}"
 
 # Check for DNS resolution
-curl https://${FQDN} 
+curl https://${FQDN}
 CHK=$?
 if [ ${CHK} -ne 60 ] && [ ${CHK} -ne 0 ]; then
   print_err "Problem resolving ${FQDN} to a private IP address. Remedy before continuing."
@@ -80,15 +76,15 @@ fi
 #####################################################################
 print_msg "Writing HPILO config file..."
 
-CFG="/hpilo/${FQDN}.conf"
+CFG="${SCRIPT_BASEDIR}/${FQDN}.conf"
 
 # Write config file and make it only root accessible
 echo "[ilo]" > ${CFG}
 echo "login = ${USERNAME}" >> ${CFG}
 echo "password = ${PASSWORD}" >> ${CFG}
 
-# Make the file root readable as it contains passwords
-chmod 700 ${CFG}
+# Make the file user-readable only as it contains passwords
+chmod 600 ${CFG}
 
 #####################################################################
 print_msg "Credentials validation..."
@@ -101,6 +97,8 @@ fi
 
 #####################################################################
 print_msg "HOSTNAME and DOMAIN validation..."
+
+shopt -s nocasematch
 
 # Check for HOSTNAME mismatch
 CHOSTNAME=$(hpilo_cli -c ${CFG} ${FQDN} get_network_settings | grep "dns_name" | cut -d "'" -f 4)
@@ -116,6 +114,8 @@ if [ ${CDOMAIN} != ${DOMAIN} ]; then
   exit 1
 fi
 
+shopt -u nocasematch
+
 #####################################################################
 print_msg "Generating CSR..."
 
@@ -129,21 +129,21 @@ while [ -z "${CCSR}" ]; do
   echo "${CCSR}"
 done
 
-CSR="/hpilo/${FQDN}.csr"
+CSR="${SCRIPT_BASEDIR}/${FQDN}.csr"
 hpilo_cli -c ${CFG} ${FQDN} certificate_signing_request country= state= locality= organization= organizational_unit= common_name=${FQDN} > ${CSR}
 
 #####################################################################
 print_msg "Creating the import script..."
 
-SCRIPT="/hpilo/${FQDN}.sh"
-echo 'CERTFILE="/config/'${FQDN}'/'${FQDN}'.cer"' > ${SCRIPT}
+SCRIPT="${SCRIPT_BASEDIR}/${FQDN}.sh"
+echo 'CERTFILE="${ACMESH_DIR}/'${FQDN}'/'${FQDN}'.cer"' > ${SCRIPT}
 echo 'hpilo_cli -c '${CFG}' '${FQDN}' import_certificate certificate="$(cat $CERTFILE)"' >> ${SCRIPT}
 chmod +x ${SCRIPT}
 
 #####################################################################
 print_msg "Generating and importing the certificate..."
 if [ ${STAGING} -eq 0 ]; then
-  ~/.acme.sh/acme.sh --signcsr --csr ${CSR} --dns ${DNSAPI} --reloadcmd ${SCRIPT} --force
+  ${ACMESH_DIR}/acme.sh --signcsr --csr ${CSR} --dns ${DNSAPI} --reloadcmd ${SCRIPT} --force
 else
-  ~/.acme.sh/acme.sh --signcsr --csr ${CSR} --dns ${DNSAPI} --days 1 --staging --reloadcmd ${SCRIPT} --force
+  ${ACMESH_DIR}/acme.sh --signcsr --csr ${CSR} --dns ${DNSAPI} --days 1 --staging --reloadcmd ${SCRIPT} --force
 fi

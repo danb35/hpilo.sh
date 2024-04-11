@@ -11,3 +11,11 @@ STAGING=1
 
 # Set to a valid DNS Provider (default is Cloudflare). More information on supported providers at https://github.com/acmesh-official/acme.sh/wiki/dnsapi. 
 # DNSAPI="dns_cf"
+
+# The path to the directory containing the acme.sh script, defaults to /root/.acme.sh.
+# This also affects where this script will look for your certificate.
+# ACMESH_DIR="/root/.acme.sh"
+
+# Base directory for the script, defaults to your current working directory when running it.
+# Host-specific config files and deployment scripts will be placed here.
+# SCRIPT_BASEDIR="/path/to/script"
