@@ -11,7 +11,7 @@ I no longer use TrueNAS CORE, but I do have two HPE servers with iLO on which I 
 * Make hostname/domain checking case-insensitive
 
 ## Prerequisites
-* This script depends on both [python-hpilo](https://seveas.github.io/python-hpilo/index.html) [acme.sh](https://github.com/acmesh-official/acme.sh).  Make sure these are installed and available in whatever environment you're using to run this script.
+* This script depends on both [python-hpilo](https://seveas.github.io/python-hpilo/index.html) and [acme.sh](https://github.com/acmesh-official/acme.sh).  Make sure these are installed and available in whatever environment you're using to run this script.
 * This script will obtain a certificate from a trusted certificate authority, which means you must use a public domain name you control.
 * This script uses DNS validation to obtain the script, so you must be using a [supported DNS provider](https://github.com/acmesh-official/acme.sh/wiki/dnsapi).  Fortunately, acme.sh supports over 150 DNS providers.
 
