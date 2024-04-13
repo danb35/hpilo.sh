@@ -1,9 +1,10 @@
-# Let's Encrypt HP iLO 
+# Let's Encrypt HPE iLO 
 ## History
 This script is pased on the work of Basil Hendroff at https://github.com/basilhendroff/truenas-iocage-letsencrypt/, but adapted for more general use.  Basil's work created a jail on FreeNAS/TrueNAS CORE, and installed various software in it, including this script and its dependencies.  As a result, his version of this script expected certain files to be in certain locations, and hard-coded those paths into the script.
 
 I no longer use TrueNAS CORE, but I do have two HPE servers with iLO on which I wanted to use Let's Encrypt certs, and I had another Linux VM that was already deploying certs to some other devices on my network.  That required changing some hardcoded paths in the script, and led to a few other changes as well.
 ## Changes
+I've made these changes compared to Basil's version of `hpilo.sh`:
 * Remove root privileges check
 * Add configurable path for cert
 * Add configurable path for acme.sh
@@ -51,3 +52,6 @@ When a certificate is first issued, `CF_Token` and `CF_Account_ID` are saved in 
 5. Repeat the above steps for other iLOs on your network.
 
 To list all issued certificates `acme.sh --list`. Acme.sh will manage the renewal and deployment of the certificates.
+
+## How It Works
+`hpilo.sh` ordinarily only needs to be run once per iLO host.  When you run it, it will generate a host-specific config file (`$FQDN.conf`), connect to the host so that it can generate a certificate signing request (`$FQDN.csr`), generate a host-specific deployment script (`$FQDN.sh`), and then have `acme.sh` obtain a certificate based on that CSR, using the generated script to deploy the cert to the iLO host.  Once that's done, `acme.sh` will handle renewing the cert, and deploying the renewed cert, on its own with no further need of `hpilo.sh`.
