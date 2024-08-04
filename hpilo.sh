@@ -136,7 +136,7 @@ hpilo_cli -c ${CFG} ${FQDN} certificate_signing_request country= state= locality
 print_msg "Creating the import script..."
 
 SCRIPT="${SCRIPT_BASEDIR}/${FQDN}.sh"
-echo 'CERTFILE="${ACMESH_DIR}/'${FQDN}'/'${FQDN}'.cer"' > ${SCRIPT}
+echo 'CERTFILE="'${ACMESH_DIR}'/'${FQDN}'/'${FQDN}'.cer"' > ${SCRIPT}
 echo 'hpilo_cli -c '${CFG}' '${FQDN}' import_certificate certificate="$(cat $CERTFILE)"' >> ${SCRIPT}
 chmod +x ${SCRIPT}
 
